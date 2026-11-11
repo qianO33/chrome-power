@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.chrome-power/
+artifacts/
+*.log
+.DS_Store
+.idea/

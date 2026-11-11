@@ -1,0 +1,50 @@
+{
+  "name": "chrome-power-mcp",
+  "version": "0.1.7",
+  "type": "module",
+  "description": "MCP browser-control runtime backed by Playwright persistent Chromium.",
+  "files": [
+    "dist",
+    "skills",
+    "scripts/INSTALL.md",
+    "README.md"
+  ],
+  "bin": {
+    "chrome-power": "./dist/server.js",
+    "chrome-power-cli": "./dist/cli/fallback.js",
+    "chrome-power-smoke": "./dist/cli/smoke.js"
+  },
+  "scripts": {
+    "build": "node --stack-size=8192 node_modules/typescript/bin/tsc -p tsconfig.json",
+    "typecheck": "node --stack-size=8192 node_modules/typescript/bin/tsc --noEmit -p tsconfig.json",
+    "cli": "node dist/cli/fallback.js",
+    "start": "node dist/server.js",
+    "smoke": "node dist/cli/smoke.js",
+    "test:integration": "node dist/cli/integration.js",
+    "test:viewport": "node --test dist/cli/viewport-regression.js",
+    "test:global-skill-sync": "node scripts/test-global-skill-sync.mjs",
+    "test:claude-sync": "node scripts/test-claude-sync.mjs",
+    "test:zcode-sync": "node scripts/test-zcode-sync.mjs",
+    "deploy:codex": "node scripts/deploy-codex-global.mjs",
+    "package:dist": "./scripts/package-for-distribution.sh",
+    "deploy:codex:write-config": "node scripts/deploy-codex-global.mjs --write-config",
+    "deploy:global": "node scripts/deploy-codex-global.mjs --write-config --sync-claude --sync-zcode",
+    "sync:skills": "node scripts/sync-global-skills.mjs",
+    "sync:claude": "node scripts/sync-claude-global.mjs",
+    "sync:zcode": "node scripts/sync-zcode-global.mjs",
+    "install:codex-hook": "node scripts/install-codex-post-commit-hook.mjs",
+    "install:global-hook": "node scripts/install-codex-post-commit-hook.mjs",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "playwright": "^1.55.1",
+    "pngjs": "^7.0.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pngjs": "^6.0.5",
+    "typescript": "^5.8.3"
+  }
+}
