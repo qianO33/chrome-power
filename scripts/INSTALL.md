@@ -4,22 +4,63 @@
 Kimi CLI / ZCode、Codex、Claude Code 等）就能自己打开网页、点击、输入、截图、
 看控制台和网络请求。
 
-无需部署、无需账号。安装分两条路，**按你的环境选一条**：
+无需部署、无需账号。安装分两条路：
 
-- **方式 A：从源码安装（推荐）**——clone 仓库、构建并全局安装，升级重新
-  构建即可，登录态不丢。
-- **方式 B：离线压缩包安装**——不方便构建时，用打包好的
-  `chrome-power-mcp.zip`（npm 依赖已内置）。
+- **方式 A：离线压缩包（推荐）**——从 GitHub Release 下载打包好的
+  `chrome-power-mcp.zip`，npm 依赖已内置，不需要 git / pnpm / 编译。
+- **方式 B：从源码安装（开发者）**——clone 仓库自行构建。
 
 ---
 
-## 方式 A：从源码安装（推荐）
+## 方式 A：离线压缩包安装（推荐）
 
 ### 1. 环境要求
 
 - macOS（Linux 也可；Windows 未验证）
 - Node.js ≥ 20（`node -v` 检查，没有就去 https://nodejs.org 装 LTS）
-- pnpm（`corepack enable` 或 `npm install -g pnpm`）
+- 网络（仅首次）：用于下载 Chromium 内核，约 170MB
+
+### 2. 下载解压并安装 Chromium 内核
+
+下面统一假设解压到 `~/chrome-power`（其他位置也行，路径相应替换）：
+
+```bash
+mkdir -p ~/chrome-power
+curl -L -o /tmp/chrome-power-mcp.zip \
+  https://github.com/qianO33/chrome-power/releases/latest/download/chrome-power-mcp.zip
+unzip -o /tmp/chrome-power-mcp.zip -d ~/chrome-power
+cd ~/chrome-power/chrome-power-mcp
+./node_modules/.bin/playwright install chromium
+```
+
+> 这是 Playwright 专用的 Chromium，和你日常用的 Chrome 互不影响。
+
+验证安装：
+
+```bash
+node dist/cli/smoke.js 2>&1 | tail -20
+```
+
+看到一堆 `"xxCovered": true` 就成功了。
+
+### 3. 服务与 profile 路径（方式 A）
+
+| 项 | 路径 |
+| --- | --- |
+| MCP 服务入口 | `node ~/chrome-power/chrome-power-mcp/dist/server.js` |
+| profile（登录态） | `~/.chrome-power/profile`（自己建；**必须放在安装目录之外**，升级才不会丢） |
+
+升级：重新下载并解压最新 Release 覆盖即可，profile 不受影响。
+
+---
+
+## 方式 B：从源码安装（开发者）
+
+### 1. 环境要求
+
+- macOS（Linux 也可；Windows 未验证）
+- Node.js ≥ 20（`node -v` 检查，没有就去 https://nodejs.org 装 LTS）
+- pnpm（`corepack enable` 或 `npm install -g pnpm`）和 git
 
 ### 2. 拉取、构建并安装
 
@@ -29,7 +70,8 @@ cd chrome-power
 pnpm install
 pnpm build
 ./node_modules/.bin/playwright install chromium   # 约 170MB，和日常 Chrome 互不影响
-npm install -g .
+npm pack
+npm install -g ./chrome-power-mcp-*.tgz           # 复制安装，不依赖源码目录
 ```
 
 如果 Chromium 下载失败或被跳过，手动补一次：
@@ -47,63 +89,22 @@ chrome-power-smoke 2>&1 | tail -20
 
 看到一堆 `"xxCovered": true` 就成功了。
 
-### 3. 服务与 profile 路径（方式 A）
+### 3. 服务与 profile 路径（方式 B）
 
 | 项 | 路径 |
 | --- | --- |
 | MCP 服务入口 | `node $(npm root -g)/chrome-power-mcp/dist/server.js` |
 | profile（登录态） | `~/.chrome-power/profile`（自己建；**必须放在安装目录之外**，升级才不会丢） |
 
-升级：`git pull && pnpm install && pnpm build && npm install -g .`，profile 不受影响。
-
----
-
-## 方式 B：离线压缩包安装
-
-> 压缩包内容：`chrome-power-mcp/`（MCP 服务本体，已编译 JS + 生产依赖）、
-> `skills/chrome-power-browser/`（可选 Agent Skill）、`INSTALL.md`（本文件）。
-> npm 依赖已随包打包，不需要 pnpm、不需要联网装 npm 包、不需要编译。
-
-### 1. 环境要求
-
-- macOS（Linux 也可；Windows 未验证）
-- Node.js ≥ 20（`node -v` 检查，没有就去 https://nodejs.org 装 LTS）
-- 网络（仅首次）：用于下载 Chromium 内核，约 170MB
-
-### 2. 解压并安装 Chromium 内核
-
-下面统一假设解压到 `~/chrome-power`（其他位置也行，路径相应替换）：
-
-```bash
-mkdir -p ~/chrome-power && unzip chrome-power-mcp.zip -d ~/chrome-power
-cd ~/chrome-power/chrome-power-mcp
-./node_modules/.bin/playwright install chromium
-```
-
-> 这是 Playwright 专用的 Chromium，和你日常用的 Chrome 互不影响。
-
-验证安装：
-
-```bash
-node dist/cli/smoke.js 2>&1 | tail -20
-```
-
-看到一堆 `"xxCovered": true` 就成功了。
-
-### 3. 服务与 profile 路径（方式 B）
-
-| 项 | 路径 |
-| --- | --- |
-| MCP 服务入口 | `node ~/chrome-power/chrome-power-mcp/dist/server.js` |
-| profile（登录态） | `~/chrome-power/chrome-power-mcp/profile` |
+升级：`git pull && pnpm install && pnpm build && npm pack && npm install -g ./chrome-power-mcp-*.tgz`，profile 不受影响。
 
 ---
 
 ## 4. 注册到你的 AI 工具
 
-两种方式只有**服务入口和 profile 路径不同**，注册配置形状完全一样。下面 JSON
-里的 `<MCP服务入口>` 和 `<profile目录>` 按上表替换成你的实际路径（JSON 不支持
-`~` 缩写，用 `echo $HOME` 拿真实用户目录）。
+两种方式只有**服务入口不同**，profile 统一用 `~/.chrome-power/profile`，注册
+配置形状完全一样。下面 JSON 里的 `<MCP服务入口>` 和 `<profile目录>` 按上表替换成
+你的实际路径（JSON 不支持 `~` 缩写，用 `echo $HOME` 拿真实用户目录）。
 
 ### WorkBuddy
 
@@ -184,20 +185,23 @@ Chromium 窗口里手动登录一次，之后登录态会一直保留。
 
 不想自己改配置的话，把下面这段话直接发给 AI 助手，它会按步骤替你完成：
 
-> 帮我一键配置 chrome-power。源码在
-> https://github.com/qianO33/chrome-power 。先判断本机属于哪种安装方式：
-> - `npm root -g` 下有 `chrome-power-mcp`，按“全局安装”处理，
->   服务入口是 `$(npm root -g)/chrome-power-mcp/dist/server.js`；
-> - 只有解压的 `chrome-power-mcp` 目录，按“压缩包安装”处理。
-> 还没安装的话：把仓库克隆到 `~/chrome-power/chrome-power-src`，执行
-> `pnpm install`、`pnpm build`、`./node_modules/.bin/playwright install chromium`，
-> 再执行 `npm install -g .`。然后：
-> 1. `echo $HOME` 拿真实用户目录，把 INSTALL.md 里的占位路径替换成实际值；
-> 2. 运行 `chrome-power-smoke`（或 `node dist/cli/smoke.js`），确认输出里
->    `covered: true`；
+> 帮我一键配置 chrome-power。发布页：
+> https://github.com/qianO33/chrome-power
+> 先判断本机状态：
+> - `npm root -g` 下有 `chrome-power-mcp`：按“全局安装”处理，服务入口是
+>   `$(npm root -g)/chrome-power-mcp/dist/server.js`；
+> - 已有解压的 `~/chrome-power/chrome-power-mcp`：按“离线包安装”处理，
+>   服务入口是 `$HOME/chrome-power/chrome-power-mcp/dist/server.js`；
+> - 都没有：下载
+>   https://github.com/qianO33/chrome-power/releases/latest/download/chrome-power-mcp.zip
+>   解压到 `~/chrome-power` 并执行 `./node_modules/.bin/playwright install chromium`。
+> 然后：
+> 1. `echo $HOME` 拿真实用户目录，把占位路径替换成实际值；
+> 2. 运行 `node dist/cli/smoke.js`（全局安装用 `chrome-power-smoke`），确认
+>    输出里 `covered: true`；
 > 3. 按 INSTALL.md 第 4 节，把我用的工具（WorkBuddy / Trae / Kimi CLI /
 >    ZCode）对应的 MCP 配置合并进它的配置文件，只追加 chrome-power 一项，
->    不要覆盖已有服务；profile 目录用 `~/.chrome-power/profile`；
+>    不要覆盖已有服务；profile 目录统一用 `~/.chrome-power/profile`；
 > 4. 完成后提醒我完全退出并重新打开 AI 工具，然后在新会话里说“用
 >    chrome-power 打开 https://example.com 并截图”验证。
 > 任何一步失败就把报错原样贴给我。
@@ -210,9 +214,13 @@ Chromium 窗口里手动登录一次，之后登录态会一直保留。
 
 ## 常见问题
 
-**smoke 报 Chromium 找不到**：方式 A 重跑
-`npx playwright install chromium`；方式 B 重跑
-`./node_modules/.bin/playwright install chromium`。
+**发布包下载失败**：确认能访问 GitHub；也可以直接打开
+https://github.com/qianO33/chrome-power/releases 手动下载。仍不行且本机有
+git/pnpm，按“方式 B：从源码安装”处理。
+
+**smoke 报 Chromium 找不到**：离线包重跑
+`./node_modules/.bin/playwright install chromium`；源码安装重跑
+`npx playwright install chromium`。
 
 **下载 Chromium 太慢**：
 
@@ -224,5 +232,5 @@ export PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright
 **AI 说找不到工具**：检查 JSON 路径是否真实存在；`node dist/server.js` 能常驻
 运行才算路径对；确认已完全重启 AI 工具。
 
-**想升级**：方式 A 重新拉取并构建（`git pull && pnpm install && pnpm build && npm install -g .`）；
-方式 B 重新解压覆盖即可。两种方式登录态（profile 目录）都不会丢。
+**想升级**：离线包重新下载覆盖；源码安装重新拉取构建。两种方式登录态
+（profile 目录）都不会丢。

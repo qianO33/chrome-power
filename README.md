@@ -6,30 +6,35 @@ ZCode、Codex、Claude Code 等）就能自己打开网页、点击、输入、�
 
 ## 一键安装（把这段话复制粘贴给你的 AI 助手）
 
-把下面这段话**原样复制**发给任意 AI 助手，它会自动拉源码、构建、装好、
-写注册配置并提醒重启，不需要你提供任何文件：
+把下面这段话**原样复制**发给任意 AI 助手。它会优先下载 GitHub Release
+里的离线包（不需要 git / pnpm / 编译），装好后写注册配置并提醒重启：
 
-> 帮我一键安装并配置 chrome-power（本地浏览器控制 MCP 服务），源码在
-> [https://github.com/qianO33/chrome-power](https://github.com/qianO33/chrome-power)。
+> 帮我一键安装并配置 chrome-power（本地浏览器控制 MCP 服务），发布页：
+> https://github.com/qianO33/chrome-power
 > 步骤：
-> 1. 先判断是否已安装：`npm root -g` 下有 chrome-power-mcp 就直接用，
->    服务入口是 `$(npm root -g)/chrome-power-mcp/dist/server.js`；没有的话
->    把仓库克隆到 `~/chrome-power/chrome-power-src`，执行
->    `pnpm install`、`pnpm build`、`./node_modules/.bin/playwright install chromium`，
->    再在该目录执行 `npm install -g .`。只有当我明确给了你
->    chrome-power-mcp.zip 压缩包时，才改用解压方式（解压到 `~/chrome-power`，
->    服务入口 `~/chrome-power/chrome-power-mcp/dist/server.js`）。
-> 2. profile 目录用 `~/.chrome-power/profile`（不存在就创建）。
-> 3. 先写注册配置再谈验证：`echo $HOME` 拿真实用户目录，把我用的 AI 工具
+> 1. 已安装就复用：`npm root -g` 下有 chrome-power-mcp 时，服务入口是
+>    `$(npm root -g)/chrome-power-mcp/dist/server.js`，直接跳到第 3 步。
+> 2. 没装就优先下载发布包（无需 git/pnpm/编译）：下载
+>    https://github.com/qianO33/chrome-power/releases/latest/download/chrome-power-mcp.zip
+>    解压到 `~/chrome-power`，得到 `~/chrome-power/chrome-power-mcp`；在该目录
+>    执行 `./node_modules/.bin/playwright install chromium`（约 170MB，失败就
+>    重跑一次），服务入口是 `$HOME/chrome-power/chrome-power-mcp/dist/server.js`。
+>    只有发布包下载失败、且本机有 git 和 pnpm 时，才改为源码安装：克隆到
+>    `~/chrome-power/chrome-power-src`，执行 `pnpm install`、`pnpm build`、
+>    `./node_modules/.bin/playwright install chromium`、`npm install -g .`
+>    （npm 会软链到源码目录，之后不要删它），服务入口改为
+>    `$(npm root -g)/chrome-power-mcp/dist/server.js`。
+> 3. profile 固定用 `$HOME/.chrome-power/profile`（不存在就创建）。
+> 4. 先写注册配置再谈验证：`echo $HOME` 拿真实用户目录，把我用的 AI 工具
 >    的 MCP 配置里合并加入 `{"type":"stdio","command":"node",
 >    "args":["<服务入口绝对路径>"],"env":{"CHROME_POWER_PROFILE_DIR":
 >    "<profile绝对路径>"}}`——WorkBuddy 写 `~/.workbuddy/mcp.json` 的
 >    mcpServers，ZCode 写 `~/.zcode/cli/config.json` 的 mcp.servers，
 >    Kimi CLI 用 `kimi mcp add` 或 `~/.kimi/config.toml`——只追加
 >    chrome-power 一项，不要覆盖已有服务。
-> 4. 提醒我完全退出并重新打开 AI 工具，新会话里说“用 chrome-power 打开
->    https://example.com 并截图”——第一次调用成功即验证通过；若失败，
->    再运行 `chrome-power-smoke` 诊断并把报错原样贴给我。
+> 5. 提醒我完全退出并重新打开 AI 工具，新会话里说“用 chrome-power 打开
+>    https://example.com 并截图”——第一次调用成功即验证通过；失败就跑
+>    `chrome-power-smoke`（离线包用 `node dist/cli/smoke.js`）并把报错贴给我。
 
 装好但 AI 没有主动使用 chrome-power 时，再发这句：
 
@@ -37,14 +42,32 @@ ZCode、Codex、Claude Code 等）就能自己打开网页、点击、输入、�
 > 截图/点击/抓取页面”时，请优先调用它；工具列表可用 browser_capabilities
 > 查看。
 
-**想自己在终端装**，见下面“安装（接收方）”一节的源码安装步骤，装完按
+**想自己在终端装**，见下面“安装（接收方）”的方式 A，装完按
 “注册到 AI 工具”注册并完全重启。
 
 ## 安装（接收方）
 
-### 方式 A：从源码安装（推荐）
+### 方式 A：离线包（推荐）
 
-需要 Node.js ≥ 20 和 pnpm：
+从 Release 下载 `chrome-power-mcp.zip`（npm 依赖已内置，无需 pnpm、
+无需联网装包、无需编译）：
+
+```bash
+mkdir -p ~/chrome-power
+curl -L -o /tmp/chrome-power-mcp.zip \
+  https://github.com/qianO33/chrome-power/releases/latest/download/chrome-power-mcp.zip
+unzip -o /tmp/chrome-power-mcp.zip -d ~/chrome-power
+cd ~/chrome-power/chrome-power-mcp
+./node_modules/.bin/playwright install chromium   # 下载 Chromium 内核，约 170MB
+node dist/cli/smoke.js 2>&1 | tail -20            # 验证，covered: true 即就绪
+```
+
+目录结构：`chrome-power-mcp/`（服务本体，已编译 JS + 生产依赖）、
+`skills/chrome-power-browser/`（可选 Agent Skill）、`INSTALL.md`（详细版）。
+
+### 方式 B：源码安装（开发者）
+
+需要 Node.js ≥ 20、pnpm 和 git：
 
 ```bash
 git clone https://github.com/qianO33/chrome-power.git
@@ -52,36 +75,23 @@ cd chrome-power
 pnpm install
 pnpm build
 ./node_modules/.bin/playwright install chromium   # 下载 Chromium 内核，约 170MB
-npm install -g .                                  # 装成全局命令
+npm pack
+npm install -g ./chrome-power-mcp-*.tgz           # 复制安装，不依赖源码目录
 chrome-power-smoke                                # 验证
 ```
 
 输出里全是 `"xxCovered": true` 即环境就绪。
 
-### 方式 B：离线压缩包
-
-不方便构建时用 `chrome-power-mcp.zip`（npm 依赖已内置，无需 pnpm、
-无需联网装包、无需编译）。解压后目录结构：`chrome-power-mcp/`（服务本体，
-已编译 JS + 生产依赖）、`skills/chrome-power-browser/`（可选 Agent Skill）、
-`INSTALL.md`（详细版安装说明）。
-
-```bash
-mkdir -p ~/chrome-power && unzip chrome-power-mcp.zip -d ~/chrome-power
-cd ~/chrome-power/chrome-power-mcp
-./node_modules/.bin/playwright install chromium   # 下载 Chromium 内核，约 170MB
-node dist/cli/smoke.js 2>&1 | tail -20            # 验证，covered: true 即就绪
-```
-
 ## 注册到 AI 工具
 
-注册就是往 AI 工具的 MCP 配置里加一个 stdio 服务条目。两种方式只有
-**服务入口**和 **profile 路径**不同，JSON 形状一样。JSON 不支持 `~` 缩写，
+注册就是往 AI 工具的 MCP 配置里加一个 stdio 服务条目。两种方式只有**服务入口**不同；profile 统一用
+`$HOME/.chrome-power/profile`，JSON 形状一样。JSON 不支持 `~` 缩写，
 用 `echo $HOME` 拿真实用户目录替换下面的 `/Users/你的用户名`。
 
 | 安装方式 | 服务入口 | profile 目录 |
 | --- | --- | --- |
-| 方式 A | `$(npm root -g)/chrome-power-mcp/dist/server.js` | `/Users/你的用户名/.chrome-power/profile`（不存在就建） |
-| 方式 B | `/Users/你的用户名/chrome-power/chrome-power-mcp/dist/server.js` | `/Users/你的用户名/chrome-power/chrome-power-mcp/profile` |
+| 方式 A（离线包） | `/Users/你的用户名/chrome-power/chrome-power-mcp/dist/server.js` | `/Users/你的用户名/.chrome-power/profile`（不存在就建） |
+| 方式 B（全局安装） | `$(npm root -g)/chrome-power-mcp/dist/server.js` | `/Users/你的用户名/.chrome-power/profile`（不存在就建） |
 
 下面各工具配置里的 `<服务入口>` 和 `<profile目录>` 替换成上表的绝对路径。
 

@@ -35,16 +35,22 @@ paths, config formats, or merge rules.
   `~/.qoder/skills`, `~/.codebuddy/skills`, and `~/.claude/skills`. Tell the
   user to start a fresh session of the affected tool afterward; `browser_*`
   tools appear only in a new session.
-- Receiver without the repository: clone
-  `https://github.com/qianO33/chrome-power`, then run `pnpm install`,
-  `pnpm build`, `./node_modules/.bin/playwright install chromium`, and
-  `npm install -g .` (rerun `npx playwright install chromium` if Chromium
-  is missing). Verify with `chrome-power-smoke`, register the MCP entry with
-  `node $(npm root -g)/chrome-power-mcp/dist/server.js` and
-  `CHROME_POWER_PROFILE_DIR=~/.chrome-power/profile`, and tell the user to
-  fully quit and reopen the AI tool. Follow `INSTALL.md` in the repository
-  for per-platform registration shapes; upgrade later by pulling and
-  rebuilding.
+- Receiver without the repository: prefer the GitHub Release zip. Download
+  `https://github.com/qianO33/chrome-power/releases/latest/download/chrome-power-mcp.zip`,
+  unzip it into `~/chrome-power`, run
+  `./node_modules/.bin/playwright install chromium` inside
+  `~/chrome-power/chrome-power-mcp` (rerun `npx playwright install chromium`
+  if Chromium is missing), and verify with `node dist/cli/smoke.js`. Register
+  the MCP entry with `$HOME/chrome-power/chrome-power-mcp/dist/server.js` and
+  `CHROME_POWER_PROFILE_DIR=$HOME/.chrome-power/profile`, then tell the user
+  to fully quit and reopen the AI tool. Fall back to source only when the
+  release download fails and git/pnpm are available: clone
+  `https://github.com/qianO33/chrome-power`, run `pnpm install`, `pnpm build`,
+  `./node_modules/.bin/playwright install chromium`, and
+  `npm pack && npm install -g ./chrome-power-mcp-*.tgz`, then register
+  `$(npm root -g)/chrome-power-mcp/dist/server.js`. Follow `INSTALL.md` in the
+  repository for per-platform registration shapes; upgrade by downloading the
+  latest release again.
 - Receiver without the repository (unzipped `dist-pkg` package): follow
   `INSTALL.md` inside the distribution package. (1) Run
   `./node_modules/.bin/playwright install chromium` once in the
